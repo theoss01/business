@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScreenSmart Solutions | Phone Repair</title>
+    <meta name="description" content="Professional smartphone screen, battery, and back glass repair in Botswana. Experience convenience and reliability.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Three.js for 3D Elements -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f2a26', // Deep teal
+                            DEFAULT: '#1a4f47',
+                            light: '#2d8a7e',
+                            accent: '#4fd1c5', // Bright cyan
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        header: ['Oswald', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 12s linear infinite',
+                        'bounce-short': 'bounce 0.5s ease-in-out 2',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'scale-in': 'scaleIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(15, 42, 38, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .price-row:nth-child(even) {
+            background-color: rgba(255,255,255, 0.02);
+        }
+        
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        /* Scroll Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Tilt Effect */
+        .tilt-card {
+            transition: transform 0.1s;
+            transform-style: preserve-3d;
+        }
+
+        /* Slideshow Transitions */
+        .slideshow-image {
+            transition: opacity 1s ease-in-out;
+        }
+        .progress-bar {
+            transition: width 3s linear;
+        }
+
+        /* 3D Cube Animation */
+        .scene-3d {
+            perspective: 1000px;
+        }
+        .cube {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotateCube 20s infinite linear;
+        }
+        .cube-face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 2px solid #4fd1c5;
+            background: rgba(26, 79, 71, 0.2);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+        .cube-face:nth-child(1) { transform: rotateY(0deg) translateZ(50px); }
+        .cube-face:nth-child(2) { transform: rotateY(90deg) translateZ(50px); }
+        .cube-face:nth-child(3) { transform: rotateY(180deg) translateZ(50px); }
+        .cube-face:nth-child(4) { transform: rotateY(-90deg) translateZ(50px); }
+        .cube-face:nth-child(5) { transform: rotateX(90deg) translateZ(50px); }
+        .cube-face:nth-child(6) { transform: rotateX(-90deg) translateZ(50px); }
+
+        @keyframes rotateCube {
+            from { transform: rotateX(0deg) rotateY(0deg); }
+            to { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        /* Form Focus Animation */
+        .input-animate:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 209, 197, 0.3);
+        }
+        
+        /* Toggle visibility */
+        .hidden-view {
+            display: none;
+        }
+
+        /* Accordion Styles */
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-item.active .accordion-content {
+            max-height: 200px; /* Adjust based on content */
+            opacity: 1;
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased selection:bg-brand-accent selection:text-brand-dark overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-panel border-b border-brand-light/20 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer" onclick="switchView('home')">
+                    <!-- Logo Image -->
+                    <img src="logo.jpg" alt="ScreenSmart Logo" class="h-12 w-12 rounded-lg object-cover shadow-lg shadow-brand-accent/20 border border-brand-accent/30 bg-white">
+                    <div class="flex flex-col">
+                        <span class="font-header text-xl tracking-wide text-white font-bold leading-none">ScreenSmart Solutions</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <button onclick="switchView('home')" class="hover:text-brand-accent transition-colors px-3 py-2 rounded-md text-sm font-medium relative group">
+                            Home
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-accent transition-all group-hover:w-full"></span>
+                        </button>
+                        <button onclick="switchView('home', 'services')" class="hover:text-brand-accent transition-colors px-3 py-2 rounded-md text-sm font-medium relative group">
+                            Services
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-accent transition-all group-hover:w-full"></span>
+                        </button>
+                        <button onclick="switchView('accessories')" class="hover:text-brand-accent transition-colors px-3 py-2 rounded-md text-sm font-medium relative group">
+                            <i class="ph-fill ph-bag"></i> Accessories
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-accent transition-all group-hover:w-full"></span>
+                        </button>
+                        <button onclick="switchView('blog')" class="text-brand-accent hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium relative group">
+                            <i class="ph-fill ph-lightbulb"></i> Tips & FAQ
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-accent transition-all group-hover:w-full"></span>
+                        </button>
+                        <button onclick="switchView('home', 'booking')" class="bg-brand-accent text-brand-dark hover:bg-white hover:scale-105 transition-all px-5 py-2 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(79,209,197,0.3)]">
+                            Book Repair
+                        </button>
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-gray-300 hover:text-white p-2">
+                        <i class="ph ph-list text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-brand-dark border-t border-gray-700 absolute w-full glass-panel">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="switchView('home'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-brand-light/20">Home</button>
+                <button onclick="switchView('home', 'services'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-brand-light/20">Services</button>
+                <button onclick="switchView('accessories'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-brand-accent">Accessories</button>
+                <button onclick="switchView('blog'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-brand-accent">Tips & FAQ</button>
+                <button onclick="switchView('home', 'booking'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-brand-accent bg-brand-dark/50 mt-4">Book Repair</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Custom Modal/Popup -->
+    <div id="custom-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div class="glass-panel p-8 rounded-3xl max-w-sm mx-4 text-center border-brand-accent/50 shadow-[0_0_50px_rgba(79,209,197,0.2)] animate-scale-in">
+            <div class="w-20 h-20 bg-brand-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="ph-fill ph-check-circle text-5xl text-brand-accent animate-bounce-short"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2" id="modal-title">Success!</h3>
+            <p class="text-gray-300 mb-6" id="modal-message">Your request has been processed successfully.</p>
+            <button onclick="closeModal()" class="w-full bg-brand-accent text-brand-dark font-bold py-3 rounded-xl hover:bg-white transition-all transform hover:scale-105">
+                Awesome, thanks!
+            </button>
+        </div>
+    </div>
+
+    <!-- Scroll To Top Button -->
+    <button id="scrollToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-8 right-8 z-40 w-12 h-12 bg-brand-accent text-brand-dark rounded-full shadow-lg flex items-center justify-center transition-all transform translate-y-20 opacity-0 hover:scale-110 hover:bg-white">
+        <i class="ph-bold ph-arrow-up text-xl"></i>
+    </button>
+
+    <!-- ======================= HOME VIEW ======================= -->
+    <div id="home-view">
+        <!-- Hero Section with 3D Background -->
+        <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+            
+            <!-- 3D Canvas -->
+            <div id="canvas-container"></div>
+            
+            <!-- Overlay Gradient -->
+            <div class="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-gray-900/60 to-gray-900 z-1 pointer-events-none"></div>
+
+            <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+                <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-brand-accent/30 bg-brand-accent/10 backdrop-blur-md mb-6 animate-fade-in-down reveal">
+                    <span class="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></span>
+                    <span class="text-xs font-medium text-brand-accent uppercase tracking-wider">Top Rated Repair Service in Gaborone</span>
+                </div>
+                
+                <h1 class="text-5xl sm:text-7xl font-header font-bold tracking-tight text-white mb-6 drop-shadow-2xl reveal">
+                    Where Every Crack <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent via-white to-blue-400">Finds Its Fix</span>
+                </h1>
+                
+                <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-200 reveal delay-100">
+                    Professional screen, battery, and back glass repair for iPhone, Samsung, Huawei, and Tecno. Fast, reliable, and convenient.
+                </p>
+                
+                <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4 reveal delay-200">
+                    <a href="#pricing" class="px-8 py-4 border border-transparent text-base font-bold rounded-lg text-brand-dark bg-brand-accent hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(79,209,197,0.4)]">
+                        Check Price List
+                    </a>
+                    <a href="#booking" class="px-8 py-4 border border-gray-500/50 backdrop-blur-sm bg-white/5 text-base font-medium rounded-lg text-white hover:bg-white/10 hover:border-white transition-all flex items-center justify-center gap-2">
+                        <i class="ph-fill ph-calendar-check"></i> Book Now
+                    </a>
+                </div>
+                
+                <!-- Mobile Service Highlight -->
+                <div class="mt-16 reveal delay-300 transform hover:-translate-y-1 transition-transform duration-300">
+                    <div class="inline-flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 backdrop-blur-xl shadow-2xl">
+                        <div class="p-3 bg-brand-accent/20 rounded-full">
+                            <i class="ph-fill ph-moped text-brand-accent text-2xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xs text-gray-400 uppercase tracking-wider font-bold">Convenience First</div>
+                            <div class="text-base font-bold text-white">We Pick & Drop: <span class="text-brand-accent">P80</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why Choose Us Section (New 3D Feature) -->
+        <section class="py-20 bg-gray-900 relative border-b border-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row items-center justify-between mb-16">
+                    <div class="md:w-1/2 reveal">
+                        <h2 class="text-brand-accent font-header tracking-wider uppercase text-sm font-bold mb-2">Why Choose Us</h2>
+                        <h3 class="text-4xl font-bold text-white mb-6">We Are The Repair Experts</h3>
+                        <p class="text-gray-400 mb-4">We combine speed, quality parts, and expert technicians to give your device the best care possible.</p>
+                    </div>
+                    <div class="md:w-1/2 flex justify-center mt-10 md:mt-0 reveal delay-100">
+                        <!-- CSS 3D Cube Animation -->
+                        <div class="scene-3d">
+                            <div class="cube">
+                                <div class="cube-face"><i class="ph-fill ph-wrench"></i></div>
+                                <div class="cube-face"><i class="ph-fill ph-shield-check"></i></div>
+                                <div class="cube-face"><i class="ph-fill ph-clock"></i></div>
+                                <div class="cube-face"><i class="ph-fill ph-star"></i></div>
+                                <div class="cube-face"><i class="ph-fill ph-heart"></i></div>
+                                <div class="cube-face"><i class="ph-fill ph-thumbs-up"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- Feature 1 -->
+                    <div class="tilt-card glass-card p-6 rounded-2xl text-center group hover:bg-brand-accent/5 transition-all reveal delay-100">
+                        <div class="w-12 h-12 mx-auto bg-brand-light/20 rounded-full flex items-center justify-center mb-4 text-brand-accent group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-lightning text-2xl"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Fast Repair</h4>
+                        <p class="text-gray-400 text-sm">Most repairs completed within 1 hour.</p>
+                    </div>
+                    <!-- Feature 2 -->
+                    <div class="tilt-card glass-card p-6 rounded-2xl text-center group hover:bg-brand-accent/5 transition-all reveal delay-200">
+                        <div class="w-12 h-12 mx-auto bg-brand-light/20 rounded-full flex items-center justify-center mb-4 text-brand-accent group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-shield-check text-2xl"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Warranty</h4>
+                        <p class="text-gray-400 text-sm">Warranty provided on screen replacements.</p>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div class="tilt-card glass-card p-6 rounded-2xl text-center group hover:bg-brand-accent/5 transition-all reveal delay-300">
+                        <div class="w-12 h-12 mx-auto bg-brand-light/20 rounded-full flex items-center justify-center mb-4 text-brand-accent group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-medal text-2xl"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Quality Parts</h4>
+                        <p class="text-gray-400 text-sm">We use only high-quality OEM grade parts.</p>
+                    </div>
+                    <!-- Feature 4 -->
+                    <div class="tilt-card glass-card p-6 rounded-2xl text-center group hover:bg-brand-accent/5 transition-all reveal delay-400">
+                        <div class="w-12 h-12 mx-auto bg-brand-light/20 rounded-full flex items-center justify-center mb-4 text-brand-accent group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-lock-key text-2xl"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Data Safe</h4>
+                        <p class="text-gray-400 text-sm">Your data privacy is our top priority.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual Services Grid -->
+        <section id="services" class="py-24 bg-gray-900 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16 reveal">
+                    <h2 class="text-brand-accent font-header tracking-wider uppercase text-sm font-bold mb-2">Our Expertise</h2>
+                    <h3 class="text-4xl font-bold text-white">Premium Repair Services</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Service 1 -->
+                    <div class="tilt-card glass-card p-8 rounded-3xl relative overflow-hidden group reveal">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-accent/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-brand-accent/20"></div>
+                        
+                        <div class="w-16 h-16 bg-gradient-to-br from-brand-light to-brand-dark rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500">
+                            <i class="ph-fill ph-device-mobile-camera text-white text-3xl"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white mb-3 font-header">Screen Replacement</h4>
+                        <p class="text-gray-400 leading-relaxed">Restoring clarity to your digital life. We use premium OEM-grade screens for iPhone, Samsung, Huawei, and Tecno devices.</p>
+                        <div class="mt-6 w-full h-40 rounded-xl overflow-hidden relative">
+                             <img src="https://images.unsplash.com/photo-1596558450268-9c27524ba856?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Screen Repair" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                             <div class="absolute inset-0 bg-brand-dark/20 group-hover:bg-transparent transition-colors"></div>
+                        </div>
+                    </div>
+
+                    <!-- Service 2 -->
+                    <div class="tilt-card glass-card p-8 rounded-3xl relative overflow-hidden group reveal delay-100">
+                         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-blue-500/20"></div>
+
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-900 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500">
+                            <i class="ph-fill ph-battery-charging text-white text-3xl"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white mb-3 font-header">Battery Replacement</h4>
+                        <p class="text-gray-400 leading-relaxed">Powering your day, longer. Replace your degrading battery to restore peak performance. Androids start at just P250.</p>
+                         <div class="mt-6 w-full h-40 rounded-xl overflow-hidden relative">
+                             <!-- UPDATED: Using your local file "battery repair.webp" -->
+                             <img src="battery repair.webp" alt="Battery Repair" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                             <div class="absolute inset-0 bg-brand-dark/20 group-hover:bg-transparent transition-colors"></div>
+                        </div>
+                    </div>
+
+                    <!-- Service 3 -->
+                    <div class="tilt-card glass-card p-8 rounded-3xl relative overflow-hidden group reveal delay-200">
+                         <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-purple-500/20"></div>
+
+                        <div class="w-16 h-16 bg-gradient-to-br from-purple-600 to-purple-900 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500">
+                            <i class="ph-fill ph-shield-check text-white text-3xl"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white mb-3 font-header">Glass & Protection</h4>
+                        <p class="text-gray-400 leading-relaxed">Aesthetic and armor. Back glass replacement to fix cracks, plus Nano Coating (P250) for ultimate scratch resistance.</p>
+                         <div class="mt-6 w-full h-40 rounded-xl overflow-hidden relative">
+                             <img src="https://images.unsplash.com/photo-1592434134753-a70baf7979d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Glass Repair" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                             <div class="absolute inset-0 bg-brand-dark/20 group-hover:bg-transparent transition-colors"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio / Automatic Slideshow Section (Smaller Size) -->
+        <section id="portfolio" class="py-24 bg-gray-900 relative border-t border-gray-800">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"> <!-- Constrained width to max-w-5xl -->
+                <div class="text-center mb-12 reveal">
+                    <h2 class="text-brand-accent font-header tracking-wider uppercase text-sm font-bold mb-2">Real Results</h2>
+                    <h3 class="text-4xl font-bold text-white">Before & After Showcase</h3>
+                    <p class="mt-4 text-gray-400">See the transformation with our automatic gallery.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8"> <!-- Reduced gap -->
+                    
+                    <!-- SLIDER 1: Screen Repair -->
+                    <div class="reveal delay-100">
+                        <h4 class="text-lg font-bold text-white mb-4 text-center">Screen Restoration</h4>
+                        <!-- Reduced height to h-64 (mobile) and md:h-72 (desktop) -->
+                        <div class="relative w-full h-64 md:h-72 rounded-2xl overflow-hidden shadow-2xl border border-gray-700 bg-black" id="slideshow-1">
+                            <!-- Images -->
+                            <img src="screen before.jpg" class="slideshow-image absolute inset-0 w-full h-full object-cover z-10 opacity-100" alt="Screen Before Repair">
+                            <img src="screen after.jpg" class="slideshow-image absolute inset-0 w-full h-full object-cover z-20 opacity-0" alt="Screen After Repair">
+                            
+                            <!-- Overlay Labels -->
+                            <div class="absolute top-4 left-4 z-30 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg border border-gray-600">
+                                <span class="text-[10px] font-bold font-header tracking-wider text-brand-accent" id="label-1">BEFORE</span>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="absolute bottom-0 left-0 h-1 bg-brand-accent z-30 progress-bar w-0"></div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDER 2: Back Glass Repair -->
+                    <div class="reveal delay-200">
+                        <h4 class="text-lg font-bold text-white mb-4 text-center">Back Glass Repair</h4>
+                        <!-- Reduced height to h-64 (mobile) and md:h-72 (desktop) -->
+                        <div class="relative w-full h-64 md:h-72 rounded-2xl overflow-hidden shadow-2xl border border-gray-700 bg-black" id="slideshow-2">
+                            <!-- Images -->
+                            <img src="back glass before.jpg" class="slideshow-image absolute inset-0 w-full h-full object-cover z-10 opacity-100" alt="Back Glass Before">
+                            <img src="back glass after.jpg" class="slideshow-image absolute inset-0 w-full h-full object-cover z-20 opacity-0" alt="Back Glass After">
+                            
+                            <!-- Overlay Labels -->
+                            <div class="absolute top-4 left-4 z-30 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg border border-gray-600">
+                                <span class="text-[10px] font-bold font-header tracking-wider text-brand-accent" id="label-2">BEFORE</span>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="absolute bottom-0 left-0 h-1 bg-brand-accent z-30 progress-bar w-0"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section id="pricing" class="py-24 bg-brand-dark relative overflow-hidden">
+            <!-- Abstract Background Shapes -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
+                <div class="absolute -top-24 -left-24 w-96 h-96 bg-brand-accent rounded-full blur-[100px]"></div>
+                <div class="absolute bottom-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-[100px]"></div>
+            </div>
+            
+            <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12 reveal">
+                    <h2 class="text-3xl md:text-5xl font-header font-bold text-white">Transparent Pricing</h2>
+                    <p class="mt-4 text-brand-accent text-lg">No hidden fees. Quality guaranteed.</p>
+                </div>
+
+                <!-- Category Tabs -->
+                <div class="flex flex-wrap justify-center gap-4 mb-10 reveal" id="categoryTabs">
+                    <button onclick="switchCategory('screen')" class="cat-btn active px-8 py-3 rounded-full text-sm font-bold tracking-wide transition-all border border-brand-accent bg-brand-accent text-brand-dark shadow-[0_0_15px_rgba(79,209,197,0.4)]" data-cat="screen">SCREEN</button>
+                    <button onclick="switchCategory('battery')" class="cat-btn px-8 py-3 rounded-full text-sm font-bold tracking-wide transition-all border border-brand-accent/30 text-gray-300 hover:border-brand-accent hover:text-white" data-cat="battery">BATTERY</button>
+                    <button onclick="switchCategory('backglass')" class="cat-btn px-8 py-3 rounded-full text-sm font-bold tracking-wide transition-all border border-brand-accent/30 text-gray-300 hover:border-brand-accent hover:text-white" data-cat="backglass">BACK GLASS</button>
+                </div>
+
+                <!-- Brand Tabs (Only visible for Screen Repair) -->
+                <div id="brandTabs" class="flex flex-wrap justify-center gap-4 mb-8 reveal">
+                    <button onclick="switchBrand('iphone')" class="brand-btn active flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-transparent transition-all ring-2 ring-brand-accent shadow-lg" data-brand="iphone">
+                        <i class="ph-fill ph-apple-logo text-xl"></i> iPhone
+                    </button>
+                    <button onclick="switchBrand('samsung')" class="brand-btn flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/20 border border-transparent transition-all" data-brand="samsung">
+                        <span class="font-bold tracking-wider">SAMSUNG</span>
+                    </button>
+                    <button onclick="switchBrand('huawei')" class="brand-btn flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/20 border border-transparent transition-all" data-brand="huawei">
+                        <span class="font-bold tracking-wider">HUAWEI</span>
+                    </button>
+                    <button onclick="switchBrand('tecno')" class="brand-btn flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/20 border border-transparent transition-all" data-brand="tecno">
+                        <span class="font-bold tracking-wider">TECNO</span>
+                    </button>
+                </div>
+
+                <!-- Pricing Table Container -->
+                <div class="glass-panel rounded-3xl overflow-hidden shadow-2xl reveal delay-100">
+                    <div class="grid grid-cols-2 bg-black/40 p-6 border-b border-white/10 font-header tracking-widest text-brand-accent text-sm uppercase">
+                        <div>Device Model</div>
+                        <div class="text-right">Price (BWP)</div>
+                    </div>
+                    <div id="priceList" class="max-h-[500px] overflow-y-auto custom-scrollbar p-2">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reviews Section -->
+        <section id="reviews" class="py-24 bg-gray-900 border-t border-gray-800 relative">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12 reveal">
+                    <h2 class="text-brand-accent font-header tracking-wider uppercase text-sm font-bold mb-2">Customer Feedback</h2>
+                    <h3 class="text-4xl font-bold text-white">What Our Clients Say</h3>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-12">
+                    <!-- Write Review -->
+                    <div class="reveal">
+                        <div class="glass-card p-8 rounded-3xl">
+                            <h4 class="text-xl font-bold text-white mb-6">Leave a Review</h4>
+                            <form onsubmit="submitReview(event)" class="space-y-4">
+                                <input type="text" id="reviewName" required class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all" placeholder="Your Name">
+                                <select id="reviewRating" class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all">
+                                    <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+                                    <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+                                    <option value="3">⭐⭐⭐ (3 Stars)</option>
+                                    <option value="2">⭐⭐ (2 Stars)</option>
+                                    <option value="1">⭐ (1 Star)</option>
+                                </select>
+                                <textarea id="reviewText" required rows="3" class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all" placeholder="Share your experience..."></textarea>
+                                <button type="submit" class="w-full bg-brand-accent text-brand-dark font-bold py-3 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2" id="submitReviewBtn">
+                                    <span>Submit Review</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Review List -->
+                    <div class="reveal delay-100">
+                        <h4 class="text-xl font-bold text-white mb-6">Recent Reviews</h4>
+                        <!-- Empty container by default -->
+                        <div id="reviewsList" class="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                            <!-- Reviews inserted by JS -->
+                            <div id="no-reviews-msg" class="text-gray-500 italic text-sm">No reviews yet. Be the first to share your experience!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Booking Section with Image -->
+        <section id="booking" class="py-24 bg-gray-900 border-t border-gray-800 relative">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    
+                    <!-- Form Side -->
+                    <div class="order-2 md:order-1 reveal">
+                        <div class="mb-8">
+                             <h2 class="text-brand-accent font-header tracking-wider uppercase text-sm font-bold mb-2">Book Appointment</h2>
+                            <h3 class="text-4xl font-bold text-white">Ready to Fix It?</h3>
+                            <p class="mt-4 text-gray-400">Skip the queue. Book your slot directly via WhatsApp.</p>
+                        </div>
+
+                        <div class="glass-card p-8 rounded-3xl shadow-2xl">
+                            <form onsubmit="sendToWhatsapp(event)" class="space-y-5">
+                                <div class="grid grid-cols-1 gap-5">
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Name</label>
+                                        <input type="text" id="name" required class="input-animate w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all" placeholder="Your Name">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                         <div>
+                                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Phone</label>
+                                            <input type="tel" id="phone" required class="input-animate w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all" placeholder="7x xxx xxx">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Device</label>
+                                            <input type="text" id="device" required class="input-animate w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all" placeholder="e.g. iPhone 12">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Service</label>
+                                        <select id="service" class="input-animate w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all">
+                                            <option>Screen Replacement</option>
+                                            <option>Battery Replacement</option>
+                                            <option>Back Glass Repair</option>
+                                            <option>Nano Coating</option>
+                                            <option>Other Inquiry</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Preferred Time</label>
+                                        <input type="datetime-local" id="datetime" required class="input-animate w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all [color-scheme:dark]">
+                                    </div>
+                                </div>
+
+                                <button type="submit" id="submitBookingBtn" class="w-full group relative overflow-hidden flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-1">
+                                    <span class="absolute inset-0 w-full h-full bg-white/20 group-hover:translate-x-full transition-transform duration-500 ease-out -translate-x-full skew-x-12"></span>
+                                    <i class="ph-fill ph-whatsapp-logo text-2xl icon"></i>
+                                    <span class="text">Send Request</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Image Side -->
+                    <div class="order-1 md:order-2 reveal delay-100">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-brand-accent/20 blur-[100px] rounded-full"></div>
+                            <img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Phone Repair Technician" class="relative z-10 rounded-3xl shadow-2xl border border-gray-700 transform rotate-2 hover:rotate-0 transition-all duration-500">
+                            
+                            <!-- Floating Badge -->
+                            <div class="absolute -bottom-6 -left-6 bg-gray-800 p-4 rounded-2xl border border-gray-700 shadow-xl z-20 flex items-center gap-3 animate-float">
+                                <div class="bg-green-500/20 p-2 rounded-full">
+                                    <i class="ph-fill ph-clock text-green-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-400 font-bold uppercase">Response Time</div>
+                                    <div class="text-white font-bold">Fast & Instant</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ======================= ACCESSORIES VIEW ======================= -->
+    <div id="accessories-view" class="hidden-view">
+        <section class="relative min-h-screen pt-32 pb-20 bg-gray-900">
+            <!-- Background Elements -->
+            <div class="absolute inset-0 bg-gradient-to-b from-brand-dark/50 via-gray-900 to-gray-900 z-0 pointer-events-none"></div>
+            
+            <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16 animate-fade-in">
+                    <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-brand-accent/30 bg-brand-accent/10 backdrop-blur-md mb-6">
+                        <i class="ph-fill ph-bag text-brand-accent"></i>
+                        <span class="text-xs font-medium text-brand-accent uppercase tracking-wider">Premium Accessories</span>
+                    </div>
+                    <h2 class="text-4xl md:text-6xl font-header font-bold text-white mb-6">Enhance Your Device</h2>
+                    <p class="text-gray-400 text-lg max-w-2xl mx-auto">High-quality cases, chargers, and protection. Select a category below to order via WhatsApp.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-12 items-start">
+                    <!-- Product Categories Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 animate-scale-in">
+                        <button onclick="selectAccessory('Phone Case')" class="glass-card p-6 rounded-2xl hover:bg-brand-accent/10 transition-all text-center group border border-gray-700 hover:border-brand-accent">
+                            <div class="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-corners-out text-2xl text-brand-accent"></i>
+                            </div>
+                            <h3 class="text-white font-bold">Phone Cases</h3>
+                            <p class="text-xs text-gray-500">Stylish protection</p>
+                        </button>
+
+                        <button onclick="selectAccessory('Charger')" class="glass-card p-6 rounded-2xl hover:bg-brand-accent/10 transition-all text-center group border border-gray-700 hover:border-brand-accent">
+                            <div class="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-plug text-2xl text-brand-accent"></i>
+                            </div>
+                            <h3 class="text-white font-bold">Chargers</h3>
+                            <p class="text-xs text-gray-500">Fast & reliable</p>
+                        </button>
+
+                        <button onclick="selectAccessory('Screen Protector')" class="glass-card p-6 rounded-2xl hover:bg-brand-accent/10 transition-all text-center group border border-gray-700 hover:border-brand-accent">
+                            <div class="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-shield text-2xl text-brand-accent"></i>
+                            </div>
+                            <h3 class="text-white font-bold">Protectors</h3>
+                            <p class="text-xs text-gray-500">Tempered glass</p>
+                        </button>
+
+                        <button onclick="selectAccessory('Earphones')" class="glass-card p-6 rounded-2xl hover:bg-brand-accent/10 transition-all text-center group border border-gray-700 hover:border-brand-accent">
+                            <div class="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-headphones text-2xl text-brand-accent"></i>
+                            </div>
+                            <h3 class="text-white font-bold">Earphones</h3>
+                            <p class="text-xs text-gray-500">Crisp sound</p>
+                        </button>
+
+                        <button onclick="selectAccessory('Replacement Screen')" class="glass-card p-6 rounded-2xl hover:bg-brand-accent/10 transition-all text-center group border border-gray-700 hover:border-brand-accent md:col-span-2">
+                            <div class="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-device-mobile-camera text-2xl text-brand-accent"></i>
+                            </div>
+                            <h3 class="text-white font-bold">Screens</h3>
+                            <p class="text-xs text-gray-500">DIY or Parts Only</p>
+                        </button>
+                    </div>
+
+                    <!-- Order Form -->
+                    <div class="glass-panel p-8 rounded-3xl border border-gray-700 shadow-2xl animate-fade-in" style="animation-delay: 0.2s">
+                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                            <i class="ph-fill ph-shopping-cart text-brand-accent"></i> Quick Order
+                        </h3>
+                        <form onsubmit="orderAccessory(event)" class="space-y-5">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Item Type</label>
+                                <input type="text" id="accType" required class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all" placeholder="Select from left or type here...">
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Device Model & Details</label>
+                                <textarea id="accDetails" required rows="3" class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all" placeholder="e.g. iPhone 13 Pro Max, Silicon Case, Blue Color"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Your Name</label>
+                                    <input type="text" id="accName" required class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all" placeholder="John">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Quantity</label>
+                                    <input type="number" id="accQty" value="1" min="1" required class="input-animate w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-900/30 flex items-center justify-center gap-2 transform hover:scale-[1.02]">
+                                <i class="ph-fill ph-whatsapp-logo text-xl"></i>
+                                <span>Order via WhatsApp</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ======================= BLOG/TIPS VIEW ======================= -->
+    <div id="blog-view" class="hidden-view">
+        <section class="relative min-h-screen pt-32 pb-20 bg-gray-900">
+            <div class="absolute inset-0 bg-gradient-to-b from-brand-dark/50 via-gray-900 to-gray-900 z-0 pointer-events-none"></div>
+            
+            <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16 animate-fade-in">
+                    <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-brand-accent/30 bg-brand-accent/10 backdrop-blur-md mb-6">
+                        <i class="ph-fill ph-lightbulb text-brand-accent"></i>
+                        <span class="text-xs font-medium text-brand-accent uppercase tracking-wider">Expert Advice</span>
+                    </div>
+                    <h2 class="text-4xl md:text-5xl font-header font-bold text-white mb-6">Tips & Common Questions</h2>
+                    <p class="text-gray-400 text-lg">Everything you need to know about keeping your device in top shape.</p>
+                </div>
+
+                <div class="space-y-4 animate-scale-in">
+                    <!-- FAQ Item 1 -->
+                    <div class="glass-panel rounded-2xl overflow-hidden border border-gray-700/50 accordion-item">
+                        <button class="w-full flex items-center justify-between p-6 text-left focus:outline-none" onclick="toggleAccordion(this)">
+                            <span class="text-lg font-bold text-white">How long does a screen replacement take?</span>
+                            <i class="ph-bold ph-caret-down text-brand-accent accordion-icon text-xl"></i>
+                        </button>
+                        <div class="accordion-content bg-black/20 px-6">
+                            <p class="text-gray-400 pb-6 pt-2">Most screen replacements are completed within 30 to 60 minutes. We strive for same-day service so you're not without your phone for long.</p>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 2 -->
+                    <div class="glass-panel rounded-2xl overflow-hidden border border-gray-700/50 accordion-item">
+                        <button class="w-full flex items-center justify-between p-6 text-left focus:outline-none" onclick="toggleAccordion(this)">
+                            <span class="text-lg font-bold text-white">Will I lose my data during repair?</span>
+                            <i class="ph-bold ph-caret-down text-brand-accent accordion-icon text-xl"></i>
+                        </button>
+                        <div class="accordion-content bg-black/20 px-6">
+                            <p class="text-gray-400 pb-6 pt-2">In 99% of cases, your data remains safe. However, we always recommend backing up your device before any repair as a precaution against unforeseen electronic failures.</p>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 3 -->
+                    <div class="glass-panel rounded-2xl overflow-hidden border border-gray-700/50 accordion-item">
+                        <button class="w-full flex items-center justify-between p-6 text-left focus:outline-none" onclick="toggleAccordion(this)">
+                            <span class="text-lg font-bold text-white">Do you offer a warranty?</span>
+                            <i class="ph-bold ph-caret-down text-brand-accent accordion-icon text-xl"></i>
+                        </button>
+                        <div class="accordion-content bg-black/20 px-6">
+                            <p class="text-gray-400 pb-6 pt-2">Yes! We provide a warranty on all screen replacements covering manufacturer defects. Please note that this warranty does not cover new physical damage or liquid damage.</p>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 4 -->
+                    <div class="glass-panel rounded-2xl overflow-hidden border border-gray-700/50 accordion-item">
+                        <button class="w-full flex items-center justify-between p-6 text-left focus:outline-none" onclick="toggleAccordion(this)">
+                            <span class="text-lg font-bold text-white">Are your parts original?</span>
+                            <i class="ph-bold ph-caret-down text-brand-accent accordion-icon text-xl"></i>
+                        </button>
+                        <div class="accordion-content bg-black/20 px-6">
+                            <p class="text-gray-400 pb-6 pt-2">We use high-quality OEM (Original Equipment Manufacturer) grade parts to ensure your device functions exactly as it did when it was new.</p>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 5 -->
+                    <div class="glass-panel rounded-2xl overflow-hidden border border-gray-700/50 accordion-item">
+                        <button class="w-full flex items-center justify-between p-6 text-left focus:outline-none" onclick="toggleAccordion(this)">
+                            <span class="text-lg font-bold text-white">How does the Pick & Drop service work?</span>
+                            <i class="ph-bold ph-caret-down text-brand-accent accordion-icon text-xl"></i>
+                        </button>
+                        <div class="accordion-content bg-black/20 px-6">
+                            <p class="text-gray-400 pb-6 pt-2">For an extra P80, we collect your device from your location in Gaborone, repair it at our workshop, and deliver it back to you. You can book this service directly through our website.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-black py-12 border-t border-gray-800 relative z-20">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            <!-- Brand Info -->
+            <div class="text-center md:text-left">
+                <div class="flex items-center justify-center md:justify-start gap-3 mb-3">
+                    <!-- Footer Logo Image: Also looks for logo.jpg -->
+                    <img src="logo.jpg" alt="ScreenSmart Logo" class="h-10 w-10 rounded-lg object-cover grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all bg-white">
+                    <span class="font-header text-xl tracking-wide text-white font-bold">ScreenSmart Solutions</span>
+                </div>
+                <p class="text-gray-500 text-sm">Where every crack finds its fix.</p>
+            </div>
+
+            <!-- Operating Hours -->
+            <div class="text-center">
+                <h4 class="text-white font-bold mb-2 flex items-center justify-center gap-2"><i class="ph-fill ph-clock text-brand-accent"></i> Opening Hours</h4>
+                <p class="text-gray-400 text-sm">Mon - Sat: 10:30 AM - 5:30 PM</p>
+                <p class="text-gray-500 text-xs mt-1">Sunday: Closed</p>
+            </div>
+            
+            <!-- Socials -->
+            <div class="flex gap-6 justify-center md:justify-end">
+                <a href="https://www.facebook.com/profile.php?id=61584254409370" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"><i class="ph-fill ph-facebook-logo text-xl"></i></a>
+                <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all transform hover:scale-110"><i class="ph-fill ph-instagram-logo text-xl"></i></a>
+                <a href="mailto:screensmartsolutions@gmail.com" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white transition-all transform hover:scale-110"><i class="ph-fill ph-envelope-simple text-xl"></i></a>
+                <a href="tel:+26773860676" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white transition-all transform hover:scale-110"><i class="ph-fill ph-phone text-xl"></i></a>
+            </div>
+        </div>
+        <div class="text-center text-gray-600 text-xs mt-8">
+            &copy; 2025 ScreenSmart Solutions. Gaborone, Botswana.
+        </div>
+    </footer>
+
+    <!-- Logic Section -->
+    <script>
+        // --- View Switching Logic ---
+        function switchView(viewName, sectionId = null) {
+            const homeView = document.getElementById('home-view');
+            const accView = document.getElementById('accessories-view');
+            const blogView = document.getElementById('blog-view');
+            
+            // Scroll to top first for smooth transition feel
+            window.scrollTo({top: 0, behavior: 'instant'});
+
+            // Hide all views first
+            homeView.classList.add('hidden-view');
+            accView.classList.add('hidden-view');
+            blogView.classList.add('hidden-view');
+
+            // Show selected view
+            if (viewName === 'home') {
+                homeView.classList.remove('hidden-view');
+                if (sectionId) {
+                    setTimeout(() => {
+                        const el = document.getElementById(sectionId);
+                        if(el) el.scrollIntoView({behavior: 'smooth'});
+                    }, 100);
+                }
+            } else if (viewName === 'accessories') {
+                accView.classList.remove('hidden-view');
+            } else if (viewName === 'blog') {
+                blogView.classList.remove('hidden-view');
+            }
+        }
+
+        // --- Accessories Logic ---
+        function selectAccessory(type) {
+            const input = document.getElementById('accType');
+            input.value = type;
+            // Focus on details to prompt user next step
+            document.getElementById('accDetails').focus();
+        }
+
+        function orderAccessory(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('accType').value;
+            const details = document.getElementById('accDetails').value;
+            const name = document.getElementById('accName').value;
+            const qty = document.getElementById('accQty').value;
+
+            const message = `*NEW ACCESSORY ORDER*%0A%0A` +
+                            `🛍️ *Item:* ${type}%0A` +
+                            `📝 *Details:* ${details}%0A` +
+                            `👤 *Name:* ${name}%0A` +
+                            `🔢 *Quantity:* ${qty}`;
+
+            // Show confirmation then open WhatsApp
+            showModal("Order Ready", "Opening WhatsApp to send your order...", () => {
+                window.open(`https://wa.me/26773860676?text=${message}`, '_blank');
+                e.target.reset();
+            });
+        }
+
+        // --- FAQ Accordion Logic ---
+        function toggleAccordion(button) {
+            const item = button.parentElement;
+            const isActive = item.classList.contains('active');
+            
+            // Close all others (optional, but cleaner)
+            document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        }
+
+
+        // --- 1. Three.js 3D Background Logic ---
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            if(!container) return; // Guard clause if element hidden/missing
+            
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0f2a26, 0.05);
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const particlesCount = 1200;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i+=3) {
+                posArray[i] = (Math.random() - 0.5) * 3.5; 
+                posArray[i+1] = (Math.random() - 0.5) * 7; 
+                posArray[i+2] = (Math.random() - 0.5) * 1.5; 
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.03,
+                color: 0x4fd1c5, 
+                transparent: true,
+                opacity: 0.8,
+            });
+
+            const particlesMesh = new THREE.Points(geometry, material);
+            scene.add(particlesMesh);
+
+            const boxGeo = new THREE.BoxGeometry(3.6, 7.2, 0.5);
+            const edges = new THREE.EdgesGeometry(boxGeo);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x2d8a7e, transparent: true, opacity: 0.3 });
+            const wireframe = new THREE.LineSegments(edges, lineMat);
+            particlesMesh.add(wireframe);
+
+            camera.position.z = 6;
+
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
+
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - windowHalfX);
+                mouseY = (event.clientY - windowHalfY);
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const elapsedTime = clock.getElapsedTime();
+
+                targetX = mouseX * 0.001;
+                targetY = mouseY * 0.001;
+
+                particlesMesh.rotation.y += 0.05 * (targetX - particlesMesh.rotation.y);
+                particlesMesh.rotation.x += 0.05 * (targetY - particlesMesh.rotation.x);
+                particlesMesh.rotation.y += 0.002;
+                particlesMesh.rotation.z = Math.sin(elapsedTime * 0.5) * 0.1; 
+
+                material.size = 0.03 + Math.sin(elapsedTime * 2) * 0.01;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        }
+
+        window.addEventListener('DOMContentLoaded', init3D);
+
+        // --- 2. Tilt Effect for Cards ---
+        document.querySelectorAll('.tilt-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10; // Increased rotation for more 3D feel
+                const rotateY = ((x - centerX) / centerX) * 10;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+            });
+        });
+
+        // --- 3. Scroll Reveal Animation ---
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 150;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal(); 
+
+        // Scroll to Top Logic
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.remove("translate-y-20", "opacity-0");
+            } else {
+                scrollToTopBtn.classList.add("translate-y-20", "opacity-0");
+            }
+        });
+
+        
+        // --- 4. Automatic Slideshow Logic ---
+        function initSlideshow(id, labelId) {
+            const container = document.getElementById(id);
+            // Safety check in case elements are missing in different views
+            if(!container) return; 
+
+            const afterImage = container.querySelector('img:nth-child(2)');
+            const label = document.getElementById(labelId);
+            const progressBar = container.querySelector('.progress-bar');
+            
+            let isShowingAfter = false;
+
+            setInterval(() => {
+                // Reset progress bar
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '0%';
+                
+                // Force reflow
+                void progressBar.offsetWidth;
+
+                // Start progress bar animation
+                progressBar.style.transition = 'width 3s linear';
+                progressBar.style.width = '100%';
+
+                // Toggle Image
+                if (isShowingAfter) {
+                    afterImage.style.opacity = '0'; // Show Before
+                    label.innerText = 'BEFORE';
+                    label.style.color = '#4fd1c5'; // Brand accent
+                } else {
+                    afterImage.style.opacity = '1'; // Show After
+                    label.innerText = 'AFTER';
+                    label.style.color = '#fff';
+                }
+                isShowingAfter = !isShowingAfter;
+
+            }, 3000); // 3 Seconds per slide
+            
+            // Trigger first animation immediately
+            setTimeout(() => {
+                 progressBar.style.width = '100%';
+            }, 100);
+        }
+
+        // Init both slideshows
+        initSlideshow('slideshow-1', 'label-1');
+        initSlideshow('slideshow-2', 'label-2');
+
+
+        // --- 5. Pricing & Booking Logic ---
+        const pricingData = {
+            screen: {
+                iphone: [
+                    { m: "iPhone 6S", p: "P250" }, { m: "iPhone 6S Plus", p: "P400" },
+                    { m: "iPhone 7", p: "P450" }, { m: "iPhone 7 Plus", p: "P500" },
+                    { m: "iPhone 8", p: "P500" }, { m: "iPhone 8 Plus", p: "P550" },
+                    { m: "iPhone X", p: "P650" }, { m: "iPhone XR", p: "P680" },
+                    { m: "iPhone XS", p: "P700" }, { m: "iPhone XS Max", p: "P750" },
+                    { m: "iPhone 11", p: "P750" }, { m: "iPhone 11 Pro", p: "P800" },
+                    { m: "iPhone 11 Pro Max", p: "P900" }
+                ],
+                samsung: [
+                    { m: "Samsung A02", p: "P400" }, { m: "Samsung A03", p: "P400" },
+                    { m: "Samsung A2 Core", p: "P400" }, { m: "Samsung A3 Core", p: "P400" },
+                    { m: "Samsung A10", p: "P360" }, { m: "Samsung A10S", p: "P380" },
+                    { m: "Samsung A12", p: "P400" }, { m: "Samsung A20", p: "P450" },
+                    { m: "Samsung A22", p: "P480" }, { m: "Samsung A32", p: "P500" },
+                    { m: "Samsung A51", p: "P500" }, { m: "Samsung J5 Prime", p: "P350" },
+                    { m: "Samsung J7 Prime", p: "P400" }
+                ],
+                huawei: [
+                    { m: "Huawei Y5 2018", p: "P350" }, { m: "Huawei Y5 2019", p: "P380" },
+                    { m: "Huawei Y7P", p: "P400" }, { m: "Huawei Y9 2018", p: "P430" },
+                    { m: "Huawei Y9 2019", p: "P450" }, { m: "Huawei Y9 Prime", p: "P450" },
+                    { m: "Huawei Y8S", p: "P400" }, { m: "Huawei P9 Lite", p: "P400" },
+                    { m: "Huawei P8 Lite", p: "P350" }, { m: "Huawei P8 Lite 2017", p: "P350" },
+                    { m: "Huawei Y7 Prime", p: "P400" }, { m: "Huawei Y6 Prime", p: "P350" },
+                    { m: "Huawei Y6 2018", p: "P350" }, { m: "Huawei Y5 Prime", p: "P350" },
+                    { m: "Huawei P30 Lite", p: "P500" }, { m: "Huawei Nova 3i", p: "P350" },
+                    { m: "Huawei Psmart 2019", p: "P400" }, { m: "Huawei Psmart 2021", p: "P450" }
+                ],
+                tecno: [
+                    { m: "Tecno Spark 8", p: "P450" }, { m: "Tecno Spark 7", p: "P450" },
+                    { m: "Tecno Spark 7P", p: "P480" }, { m: "Tecno Spark 6", p: "P430" },
+                    { m: "Tecno Spark 5", p: "P400" }, { m: "Tecno Spark 5 Air", p: "P430" },
+                    { m: "Tecno Spark 4", p: "P380" }, { m: "Tecno Spark 3", p: "P350" },
+                    { m: "Tecno Spark GO", p: "P380" }, { m: "Tecno Spark GO 2020", p: "P420" }
+                ]
+            },
+            battery: {
+                iphone: [
+                    { m: "iPhone 6S", p: "P280" }, { m: "iPhone 6S Plus", p: "P280" },
+                    { m: "iPhone 7", p: "P300" }, { m: "iPhone 7 Plus", p: "P350" },
+                    { m: "iPhone 8", p: "P380" }, { m: "iPhone 8 Plus", p: "P400" },
+                    { m: "iPhone X", p: "P450" }, { m: "iPhone XR", p: "P450" },
+                    { m: "iPhone XS Max", p: "P700" }, { m: "iPhone 11", p: "P750" },
+                    { m: "iPhone 11 Pro", p: "P850" }, { m: "iPhone 11 Pro Max", p: "P950" },
+                    { m: "iPhone 12", p: "P1100" }, { m: "iPhone 12 Pro", p: "P1200" },
+                    { m: "iPhone 12 Pro Max", p: "P1400" }, { m: "iPhone 13", p: "P1400" },
+                    { m: "Android Battery Start", p: "P250" }
+                ]
+            },
+            backglass: {
+                iphone: [
+                    { m: "iPhone 8", p: "P400" }, { m: "iPhone 8 Plus", p: "P450" },
+                    { m: "iPhone X", p: "P500" }, { m: "iPhone XR", p: "P500" },
+                    { m: "iPhone XS Max", p: "P550" }, { m: "iPhone 11", p: "P600" },
+                    { m: "iPhone 11 Pro", p: "P650" }, { m: "iPhone 11 Pro Max", p: "P700" },
+                    { m: "iPhone 12", p: "P750" }, { m: "iPhone 12 Pro", p: "P800" },
+                    { m: "iPhone 12 Pro Max", p: "P900" }, { m: "iPhone 13", p: "P1000" },
+                    { m: "iPhone 13 Pro Max", p: "P1150" }
+                ]
+            }
+        };
+
+        let currentCategory = 'screen';
+        let currentBrand = 'iphone';
+
+        function renderPrices() {
+            const container = document.getElementById('priceList');
+            if(!container) return;
+            container.innerHTML = ''; 
+            
+            let data;
+            
+            if (currentCategory === 'screen') {
+                data = pricingData.screen[currentBrand];
+                document.getElementById('brandTabs').classList.remove('hidden');
+                document.getElementById('brandTabs').classList.add('flex');
+            } else if (currentCategory === 'battery') {
+                data = pricingData.battery.iphone; 
+                document.getElementById('brandTabs').classList.add('hidden');
+                document.getElementById('brandTabs').classList.remove('flex');
+            } else {
+                data = pricingData.backglass.iphone;
+                document.getElementById('brandTabs').classList.add('hidden');
+                document.getElementById('brandTabs').classList.remove('flex');
+            }
+
+            data.forEach((item) => {
+                const row = document.createElement('div');
+                row.className = 'price-row grid grid-cols-2 p-4 border-b border-gray-700/50 hover:bg-brand-accent/10 transition-colors cursor-default group';
+                row.innerHTML = `
+                    <div class="text-white font-medium group-hover:text-brand-accent transition-colors flex items-center gap-2">
+                        <i class="ph-fill ph-check-circle text-gray-600 group-hover:text-brand-accent text-xs"></i>
+                        ${item.m}
+                    </div>
+                    <div class="text-right text-brand-accent font-bold font-mono">${item.p}</div>
+                `;
+                container.appendChild(row);
+            });
+
+            if (currentCategory === 'battery') {
+                const note = document.createElement('div');
+                note.className = 'p-4 text-center text-brand-accent/80 italic text-sm';
+                note.innerText = '*Battery replacement prices for Android start at P250';
+                container.appendChild(note);
+            }
+        }
+
+        function switchCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if(btn.dataset.cat === cat) {
+                    btn.classList.add('bg-brand-accent', 'text-brand-dark', 'border-brand-accent', 'shadow-[0_0_15px_rgba(79,209,197,0.4)]');
+                    btn.classList.remove('text-gray-300', 'border-brand-accent/30');
+                } else {
+                    btn.classList.remove('bg-brand-accent', 'text-brand-dark', 'border-brand-accent', 'shadow-[0_0_15px_rgba(79,209,197,0.4)]');
+                    btn.classList.add('text-gray-300', 'border-brand-accent/30');
+                }
+            });
+            renderPrices();
+        }
+
+        function switchBrand(brand) {
+            currentBrand = brand;
+            document.querySelectorAll('.brand-btn').forEach(btn => {
+                if(btn.dataset.brand === brand) {
+                    btn.classList.add('ring-2', 'ring-brand-accent', 'bg-white/10', 'shadow-lg');
+                    btn.classList.remove('bg-white/5');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-brand-accent', 'bg-white/10', 'shadow-lg');
+                    btn.classList.add('bg-white/5');
+                }
+            });
+            renderPrices();
+        }
+
+        // --- MODAL HANDLING ---
+        function showModal(title, message, callback) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            modal.classList.remove('hidden');
+            
+            // Store callback to run when closed if needed
+            window.modalCallback = callback;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            modal.classList.add('hidden');
+            if (window.modalCallback) {
+                window.modalCallback();
+                window.modalCallback = null;
+            }
+        }
+
+        // --- BOOKING LOGIC ---
+        function sendToWhatsapp(e) {
+            e.preventDefault();
+            
+            // UI Loading State
+            const btn = document.getElementById('submitBookingBtn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = `<i class="ph ph-spinner animate-spin text-2xl"></i><span>Processing...</span>`;
+            btn.disabled = true;
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const device = document.getElementById('device').value;
+            const service = document.getElementById('service').value;
+            const datetime = document.getElementById('datetime').value;
+            
+            const dateObj = new Date(datetime);
+            const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            const message = `*NEW BOOKING REQUEST*%0A%0A` +
+                            `👤 *Name:* ${name}%0A` +
+                            `📱 *Phone:* ${phone}%0A` +
+                            `📱 *Device:* ${device}%0A` +
+                            `🔧 *Service:* ${service}%0A` +
+                            `📅 *Preferred Time:* ${dateStr}`;
+
+            // Simulate delay for effect, then show modal
+            setTimeout(() => {
+                showModal("Booking Ready!", "We've prepared your booking details. Click below to confirm via WhatsApp.", () => {
+                    window.open(`https://wa.me/26773860676?text=${message}`, '_blank');
+                    // Reset Button
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    e.target.reset();
+                });
+            }, 1000);
+        }
+
+        // --- 6. Review System Logic ---
+        function loadReviews() {
+            // Check local storage for existing reviews, default to empty array
+            let reviews = JSON.parse(localStorage.getItem('ss_reviews')) || [];
+            renderReviews(reviews);
+        }
+
+        function renderReviews(reviews) {
+            const list = document.getElementById('reviewsList');
+            const noReviewsMsg = document.getElementById('no-reviews-msg');
+            
+            if(!list) return;
+
+            list.innerHTML = '';
+
+            if (reviews.length === 0) {
+                const msg = document.createElement('div');
+                msg.id = 'no-reviews-msg';
+                msg.className = 'text-gray-500 italic text-sm';
+                msg.innerText = 'No reviews yet. Be the first to share your experience!';
+                list.appendChild(msg);
+                return;
+            }
+            
+            // Show newest first
+            [...reviews].reverse().forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'glass-card p-4 rounded-xl border border-gray-700/50 animate-fade-in';
+                
+                let stars = '';
+                for(let i=0; i<5; i++) {
+                    stars += i < r.rating ? '<i class="ph-fill ph-star text-yellow-400"></i>' : '<i class="ph-fill ph-star text-gray-600"></i>';
+                }
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-white">${r.name}</span>
+                        <div class="flex text-xs">${stars}</div>
+                    </div>
+                    <p class="text-gray-400 text-sm">${r.text}</p>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function submitReview(e) {
+            e.preventDefault();
+            
+            // UI Loading State
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Posting...`;
+            btn.disabled = true;
+
+            const name = document.getElementById('reviewName').value;
+            const rating = parseInt(document.getElementById('reviewRating').value);
+            const text = document.getElementById('reviewText').value;
+
+            const newReview = { name, rating, text };
+            
+            setTimeout(() => {
+                // Get current reviews, add new one, save back
+                let reviews = JSON.parse(localStorage.getItem('ss_reviews')) || [];
+                reviews.push(newReview);
+                localStorage.setItem('ss_reviews', JSON.stringify(reviews));
+
+                // Reload display
+                loadReviews(); 
+                
+                // Show Success Modal
+                showModal("Review Submitted", "Thank you for your feedback! It helps us improve.", null);
+                
+                // Trigger Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+
+                // Reset form
+                e.target.reset();
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }, 800);
+        }
+
+        // Initialize Everything
+        renderPrices();
+        loadReviews();
+    </script>
+</body>
+</html>
