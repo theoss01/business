@@ -114,6 +114,7 @@
         /* General Utilities */
         .tilt-card { transition: transform 0.1s; transform-style: preserve-3d; }
         .hidden-view { display: none; }
+        .hidden { display: none; }
         
         /* Accordion */
         .accordion-content {
@@ -442,6 +443,7 @@
                         <h2 class="text-brand-light dark:text-brand-accent font-header tracking-wider uppercase text-sm font-bold mb-2">Book Appointment</h2>
                         <h3 class="text-4xl font-bold text-gray-900 dark:text-white">Ready to Fix It?</h3>
                         <p class="mt-4 text-gray-600 dark:text-gray-400">Skip the queue. Book directly via WhatsApp.</p>
+                        
                         <div class="glass-card p-8 rounded-3xl shadow-2xl mt-8">
                             <form onsubmit="sendToWhatsapp(event)" class="space-y-5">
                                 <div class="grid grid-cols-1 gap-5">
@@ -453,14 +455,41 @@
                                         <option>Battery Replacement</option>
                                         <option>Back Glass Repair</option>
                                         <option>Nano Coating (P250)</option>
+                                        <option>Other</option>
                                     </select>
                                     <input type="datetime-local" id="datetime" required class="w-full bg-gray-100 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white">
+                                    
+                                    <div>
+                                        <label class="text-sm font-bold text-gray-500 dark:text-gray-400 block mb-2">Service Method</label>
+                                        <select id="repairMode" onchange="toggleLocationField()" class="w-full bg-gray-100 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-bold">
+                                            <option value="walkin">I will come to Workshop</option>
+                                            <option value="pickup">Pick & Drop Service (+P80)</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="locationFieldWrapper" class="hidden">
+                                        <label class="text-sm font-bold text-brand-light dark:text-brand-accent block mb-2 animate-pulse">Enter Collection Address</label>
+                                        <input type="text" id="collectionAddress" class="w-full bg-gray-100 dark:bg-gray-800/50 border-2 border-brand-accent rounded-xl px-4 py-3 text-gray-900 dark:text-white" placeholder="e.g. Plot 123, Block 6, Gaborone">
+                                    </div>
                                 </div>
-                                <button type="submit" id="submitBookingBtn" class="w-full flex items-center justify-center gap-3 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg">
+
+                                <button type="submit" id="submitBookingBtn" class="w-full flex items-center justify-center gap-3 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-1">
                                     <i class="ph-fill ph-whatsapp-logo text-2xl icon"></i>
                                     <span>Send Request</span>
                                 </button>
                             </form>
+
+                            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <p class="text-center text-gray-500 text-sm mb-4">Prefer to talk directly?</p>
+                                <div class="flex gap-4">
+                                    <a href="tel:+26773860676" class="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-bold py-3 rounded-xl transition-all">
+                                        <i class="ph-fill ph-phone-call text-xl"></i> Call Now
+                                    </a>
+                                    <a href="https://wa.me/26773860676" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-bold py-3 rounded-xl transition-all">
+                                        <i class="ph-fill ph-chat-circle-text text-xl"></i> WhatsApp
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="order-1 md:order-2 reveal delay-100">
@@ -813,17 +842,42 @@
             document.getElementById('custom-modal').classList.add('hidden');
             if(window.modalCallback) { window.modalCallback(); window.modalCallback = null; }
         }
+        
+        // --- Booking Logic (Updated for Location Toggle) ---
+        function toggleLocationField() {
+            const mode = document.getElementById('repairMode').value;
+            const field = document.getElementById('locationFieldWrapper');
+            if (mode === 'pickup') {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+            }
+        }
+
         function sendToWhatsapp(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBookingBtn');
             const original = btn.innerHTML;
             btn.innerHTML = 'Processing...';
+            
+            const name = document.getElementById('name').value;
+            const device = document.getElementById('device').value;
+            const service = document.getElementById('service').value;
+            const date = document.getElementById('datetime').value;
+            const mode = document.getElementById('repairMode').value;
+            const address = document.getElementById('collectionAddress').value;
+            
+            let finalModeText = mode === 'pickup' ? `Pick & Drop (Location: ${address})` : 'Client Coming to Workshop';
+
             setTimeout(() => {
-                const msg = `*NEW BOOKING*%0AName: ${document.getElementById('name').value}%0ADevice: ${document.getElementById('device').value}`;
+                const msg = `*NEW BOOKING*%0A%0A👤 Name: ${name}%0A📱 Device: ${device}%0A🔧 Service: ${service}%0A📅 Time: ${date}%0A🚚 Mode: ${finalModeText}`;
+                
                 showModal("Ready", "Confirm on WhatsApp", () => {
                     window.open(`https://wa.me/26773860676?text=${msg}`, '_blank');
                     btn.innerHTML = original;
                     e.target.reset();
+                    // Reset hidden field
+                    document.getElementById('locationFieldWrapper').classList.add('hidden');
                 });
             }, 800);
         }
@@ -858,7 +912,7 @@
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerText;
-            btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Posting...`;
+            btn.innerText = 'Posting...';
             btn.disabled = true;
 
             const name = document.getElementById('reviewName').value;
